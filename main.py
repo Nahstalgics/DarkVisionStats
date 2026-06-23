@@ -12,6 +12,7 @@ class MyWidget(QtWidgets.QWidget):
         super().__init__()
 
         self.hello = ["Hallo Welt", "Hei maailma", "Hola Mundo", "Привет мир"]
+        self.selected_file = None
 
         self.button = QtWidgets.QPushButton("Click me!")
         self.file_button = QtWidgets.QPushButton("Select File...")
@@ -38,9 +39,10 @@ class MyWidget(QtWidgets.QWidget):
             self,
             "Select File",
             QtCore.QDir.homePath(),
-            "All Files (*)"
+            "CSV Files (*.csv);;Excel Files (*.xls *.xlsx)"
         )
         if filename:
+            self.selected_file = filename
             self.text.setText(f"Selected: {filename}")
 
 if __name__ == "__main__":
