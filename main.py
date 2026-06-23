@@ -6,16 +6,19 @@ import random
 from PyQt6 import QtWidgets, QtCore
 from PyQt6.QtWidgets import QApplication, QWidget
 import sys
+from statistics import Statistics
+
 
 class MyWidget(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
-
+        self.data = None
         self.hello = ["Hallo Welt", "Hei maailma", "Hola Mundo", "Привет мир"]
         self.selected_file = None
 
         self.button = QtWidgets.QPushButton("Click me!")
         self.file_button = QtWidgets.QPushButton("Select File...")
+        self.visualize_button = QtWidgets.QPushButton("Visualize Data")
         self.text = QtWidgets.QLabel("Hello World",
                                      alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
 
@@ -23,11 +26,13 @@ class MyWidget(QtWidgets.QWidget):
         self.layout.addWidget(self.text)
         self.layout.addWidget(self.button)
         self.layout.addWidget(self.file_button)
+        self.layout.addWidget(self.visualize_button)
 
         self.setStyleSheet("")
 
         self.button.clicked.connect(self.magic)
         self.file_button.clicked.connect(self.select_file)
+        self.visualize_button.clicked.connect(self.visualize_data)
 
     @QtCore.pyqtSlot()
     def magic(self):
@@ -43,7 +48,10 @@ class MyWidget(QtWidgets.QWidget):
         )
         if filename:
             self.selected_file = filename
-            self.text.setText(f"Selected: {filename}")
+            stats = Statistics(filename)
+            self.data = stats.data.setUp()
+            
+            self.text.setText(f"Loaded: {filename} ({len(self.data)} rows)")
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])

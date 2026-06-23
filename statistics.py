@@ -27,7 +27,7 @@ class Statistics(object):
         return f"<Statistics file_path={self.file_path!r} rows={len(self.data)}>"
     
     def setUp(self):
-        self.data.loc["depth":"wall_location"]
+        self.data.loc[self.data["depth"],"depth":"wall_location"]
 
     def plot_histogram(self, column_name, bins):
         if column_name not in self.data.columns:
@@ -40,3 +40,15 @@ class Statistics(object):
         plt.ylabel('Frequency')
         plt.grid(axis='y', alpha=0.75)
         plt.show()
+
+    def create_kde(self):
+        standard_deviation = self.data.std()
+        observations = len(self.data)
+
+        silverman_bandwidth = 1.06 * standard_deviation * observations**(-1/5)  
+        kde = KernelDensity(kernel='gaussian', bandwidth=silverman_bandwidth).fit(self.data.values.reshape(-1, 1))
+        x_d = np.linspace(self.data.min(), self.data.max(), 1000)
+        return kde
+
+        
+        
