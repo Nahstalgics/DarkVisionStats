@@ -1,11 +1,8 @@
-import numpy as np
-import scipy as sp
-import pandas as pd
-import statsmodels as sm
-import random
 import os
+import random
+import pandas as pd
 from PyQt6 import QtWidgets, QtCore
-from PyQt6.QtWidgets import QApplication, QWidget
+from PyQt6.QtWidgets import QApplication
 import sys
 from statistics import Statistics
 
@@ -21,13 +18,13 @@ class MyWidget(QtWidgets.QWidget):
         self.file_button = QtWidgets.QPushButton("Select File...")
         self.visualize_button = QtWidgets.QPushButton("Visualize Data")
         self.display_button = QtWidgets.QPushButton("Display Data")
-        self.text = QtWidgets.QLabel("Hello World",
-                                     alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.text = QtWidgets.QLabel(
+            "Hello World",
+            alignment=QtCore.Qt.AlignmentFlag.AlignCenter,
+        )
 
-        # Main layout
         self.layout = QtWidgets.QHBoxLayout(self)
 
-        # Controls section (buttons)
         controls_group = QtWidgets.QGroupBox("Controls")
         controls_layout = QtWidgets.QVBoxLayout()
         controls_layout.addWidget(self.button)
@@ -36,24 +33,20 @@ class MyWidget(QtWidgets.QWidget):
         controls_layout.addWidget(self.display_button)
         controls_group.setLayout(controls_layout)
 
-        # Left section container
         left_widget = QtWidgets.QWidget()
         left_group = QtWidgets.QVBoxLayout(left_widget)
         left_group.addWidget(controls_group)
-        
-        # Display section (label / outputs)
+
         display_group = QtWidgets.QGroupBox("Display")
         display_layout = QtWidgets.QVBoxLayout()
         display_layout.addWidget(self.text)
         display_group.setLayout(display_layout)
 
-        # Add sections to main layout
         self.layout.addWidget(left_widget)
         self.layout.addWidget(display_group)
-        
+
         self.setStyleSheet("")
 
-        # Connect signals
         self.button.clicked.connect(self.magic)
         self.file_button.clicked.connect(self.select_file)
         self.visualize_button.clicked.connect(self.visualize_data)
@@ -67,33 +60,43 @@ class MyWidget(QtWidgets.QWidget):
     def select_file(self):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName(
             self,
-            "Select File", 
+            "Select File",
             QtCore.QDir.homePath(),
-            "CSV Files (*.csv);;Excel Files (*.xlsx)"
+            "CSV Files (*.csv);;Excel Files (*.xlsx)",
         )
-        if filename:
-            self.selected_file = filename
-            try:
-                _, ext = os.path.splitext(filename)
-                ext = ext.lower()
-                if ext == ".csv":
-                    df = pd.read_csv(filename)
-                elif ext in (".xls", ".xlsx"):
-                    df = pd.read_excel(filename)
-                else:
-                    QtWidgets.QMessageBox.warning(self, "Unsupported File", "Please select a .csv or .xlsx file.")
-                    return
-                self.selected_df = df
-                print(self.selected_df.head())
-            except Exception as e:
-                QtWidgets.QMessageBox.critical(self, "Error loading file", str(e))
+        if not filename:
+            return
+
+        self.selected_file = filename
+        try:
+            _, ext = os.path.splitext(filename)
+            ext = ext.lower()
+            if ext == ".csv":
+                df = pd.read_csv(filename)
+            elif ext in (".xls", ".xlsx"):
+                df = pd.read_excel(filename)
+            else:
+                QtWidgets.QMessageBox.warning(
+                    self,
+                    "Unsupported File",
+                    "Please select a .csv or .xlsx file.",
+                )
+                return
+
+            self.selected_df = df
+            self.text.setText(f"Loaded {len(df)} rows from {os.path.basename(filename)}")
+        except Exception as e:
+            self.selected_df = None
+            QtWidgets.QMessageBox.critical(self, "Error loading file", str(e))
+
     @QtCore.pyqtSlot()
     def visualize_data(self):
-        if not self.selected_file:
-            QtWidgets.QMessageBox.warning(self, "No File Selected", "Please select a file first.")
-            return
         if self.selected_df is None:
-            QtWidgets.QMessageBox.warning(self, "No Data", "Selected file was not loaded correctly. Please select a file again.")
+            QtWidgets.QMessageBox.warning(
+                self,
+                "No Data",
+                "Please select a .csv or .xlsx file first.",
+            )
             return
 
         try:
@@ -102,33 +105,34 @@ class MyWidget(QtWidgets.QWidget):
             stats.plot_histogram(column_name="depth", bins=30)
         except Exception as e:
             QtWidgets.QMessageBox.critical(self, "Error", str(e))
+
     @QtCore.pyqtSlot()
     def display_data(self):
-        if not self.selected_file:
-            QtWidgets.QMessageBox.warning(self, "No File Selected", "Please select a file first.")
+        if self.selected_df is None:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "No Data",
+                "Please select a .csv or .xlsx file first.",
+            )
             return
 
         try:
-            
-            if self.selected_df is None:
-                QtWidgets.QMessageBox.warning(self, "No Data", "Selected file was not loaded correctly. Please select a file again.")
-                return
-
             stats = Statistics(self.selected_df)
             stats.setUp()
-            print(stats.data.head())
+            self.text.setText(stats.data.head().to_string())
         except Exception as e:
             QtWidgets.QMessageBox.critical(self, "Error", str(e))
 
 
 if __name__ == "__main__":
-    app = QtWidgets.QApplication([])
+    app = QApplication([])
 
     try:
         with open("style.qss", "r") as f:
             app.setStyleSheet(f.read())
     except FileNotFoundError:
         print("style.qss file not found, running with default theme.")
+
     widget = MyWidget()
     widget.resize(800, 600)
     widget.show()

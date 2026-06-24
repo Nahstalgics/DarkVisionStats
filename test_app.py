@@ -19,3 +19,5 @@ def test_kde():
     kde = stats.create_kde()
     print(kde)
     assert kde is not None
+
+test_kde()
