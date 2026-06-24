@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import scipy as sp
 import pandas as pd
@@ -7,27 +8,17 @@ import altair as alt
 from sklearn.neighbors import KernelDensity
 
 class Statistics(object):
-    ALLOWED_EXTENSIONS = {".csv", ".xlsx"}
-
-    def __init__(self, file_path):
-        file_path = str(file_path)
-        extension = file_path.lower().rsplit('.', 1)[-1] if '.' in file_path else ''
-        extension = f".{extension}"
-        if extension not in self.ALLOWED_EXTENSIONS:
-            raise ValueError("Only .csv or .xlsx files are supported.")
-
-        if extension == ".csv":
-            self.data = pd.read_csv(file_path)
-        else:
-            self.data = pd.read_excel(file_path)
-
-        self.file_path = file_path
+    def __init__(self, data_frame):
+        if not isinstance(data_frame, pd.DataFrame):
+            raise TypeError("Statistics must be initialized with a pandas DataFrame.")
+        self.data = data_frame
+        self.file_path = None
 
     def __repr__(self):
         return f"<Statistics file_path={self.file_path!r} rows={len(self.data)}>"
     
     def setUp(self):
-        self.data.loc[self.data["depth"],"depth":"wall_location"]
+        self.data.loc[self.data["wall_location"] != np.nan, "depth":"wall_location"]
 
     def plot_histogram(self, column_name, bins):
         if column_name not in self.data.columns:
@@ -42,12 +33,19 @@ class Statistics(object):
         plt.show()
 
     def create_kde(self):
-        standard_deviation = self.data.std()
-        observations = len(self.data)
 
-        silverman_bandwidth = 1.06 * standard_deviation * observations**(-1/5)  
+    
+        standard_deviation = self.data.std()
+        total_observations = len(self.data)
+        approved_data = self.data[self.data["depth"] > 0]
+        approved_observations = len(approved_data)
+
+
+
+        silverman_bandwidth = 1.06 * standard_deviation * observations**(-1/5)
+        # sheather_jones   
         kde = KernelDensity(kernel='gaussian', bandwidth=silverman_bandwidth).fit(self.data.values.reshape(-1, 1))
-        x_d = np.linspace(self.data.min(), self.data.max(), 1000)
+        x_d = np.linspace(self.data.min(), self.data.max() , 1000)
         return kde
 
         
